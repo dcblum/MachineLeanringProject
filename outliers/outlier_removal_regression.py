@@ -25,16 +25,13 @@ ages_train, ages_test, net_worths_train, net_worths_test = train_test_split(ages
 
 ### fill in a regression here!  Name the regression object reg so that
 ### the plotting code below works, and you can see what your regression looks like
+from sklearn.linear_model import LinearRegression
+reg = LinearRegression()
+reg = reg.fit(ages_train, net_worths_train)
 
-
-
-
-
-
-
-
-
-
+print "Slope: ", reg.coef_[0][0]
+print "Score Test: ", reg.score(ages_test, net_worths_test)
+print "Score Train: ", reg.score(ages_train, net_worths_train)
 
 try:
     plt.plot(ages, reg.predict(ages), color="blue")
@@ -49,14 +46,10 @@ cleaned_data = []
 try:
     predictions = reg.predict(ages_train)
     cleaned_data = outlierCleaner( predictions, ages_train, net_worths_train )
+
 except NameError:
     print "your regression object doesn't exist, or isn't name reg"
     print "can't make predictions to use in identifying outliers"
-
-
-
-
-
 
 
 ### only run this code if cleaned_data is returning data
@@ -69,6 +62,9 @@ if len(cleaned_data) > 0:
     try:
         reg.fit(ages, net_worths)
         plt.plot(ages, reg.predict(ages), color="blue")
+        print "Cleaned Slope: ", reg.coef_[0][0]
+        print "Cleaned Score Test: ", reg.score(ages_test, net_worths_test)
+        print "Cleaned Score Train: ", reg.score(ages_train, net_worths_train)
     except NameError:
         print "you don't seem to have regression imported/created,"
         print "   or else your regression object isn't named reg"
@@ -81,4 +77,3 @@ if len(cleaned_data) > 0:
 
 else:
     print "outlierCleaner() is returning an empty list, no refitting to be done"
-

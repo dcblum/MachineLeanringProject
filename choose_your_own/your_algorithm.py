@@ -28,14 +28,31 @@ plt.show()
 ################################################################################
 
 
-### your code here!  name your classifier object clf if you want the 
+### your code here!  name your classifier object clf if you want the
 ### visualization code (prettyPicture) to show you the decision boundary
 
+from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
+from sklearn.svm import SVC
+from time import time
+
+#clf = RandomForestClassifier()
+clf = SVC(C = 10000000, kernel='rbf')
+
+# Reduce Training Set to 1% of total values
+# features_train = features_train[:len(features_train)/100]
+# labels_train = labels_train[:len(labels_train)/100]
+
+t0 = time()
+clf = clf.fit(features_train, labels_train)
+print "Training Time:", round(time()-t0, 3), 's'
+
+t0 = time()
+pred = clf.predict(features_test)
+print "Predict Time:", round(time()-t0, 3), 's'
 
 
-
-
-
+from sklearn.metrics import accuracy_score
+print "Accuracy Score:", accuracy_score(pred, labels_test)
 
 
 try:

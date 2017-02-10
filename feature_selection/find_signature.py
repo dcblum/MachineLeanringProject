@@ -8,7 +8,7 @@ numpy.random.seed(42)
 ### The words (features) and authors (labels), already largely processed.
 ### These files should have been created from the previous (Lesson 10)
 ### mini-project.
-words_file = "../text_learning/your_word_data.pkl" 
+words_file = "../text_learning/your_word_data.pkl"
 authors_file = "../text_learning/your_email_authors.pkl"
 word_data = pickle.load( open(words_file, "r"))
 authors = pickle.load( open(authors_file, "r") )
@@ -38,6 +38,28 @@ labels_train   = labels_train[:150]
 
 
 ### your code goes here
+from sklearn import tree
 
+clf = tree.DecisionTreeClassifier()
+clf.fit(features_train, labels_train)
+pred = clf.predict(features_test)
 
+from sklearn.metrics import accuracy_score
+print "Accuracy Score:", accuracy_score(pred, labels_test)
 
+print "Training Points: ", len(features_train)
+
+max_importance = max(clf.feature_importances_)
+print "Feature Best: ", max_importance
+
+for x in clf.feature_importances_:
+    if x >= .02:
+        print x
+
+max_index_numpy = numpy.where(clf.feature_importances_ == max_importance)
+max_index_array = max_index_numpy[0]
+
+# Finds word with highest importance
+print "Feature Name: ", max_index_array
+
+print vectorizer.get_feature_names()[max_index_array[0]]
