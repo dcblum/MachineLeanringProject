@@ -34,3 +34,4 @@ print "# E-Address: ", sum([x['email_address']!='NaN' for x in enron_data.values
 print "# NaN t_pay: ", sum([x['total_payments']=='NaN' for x in enron_data.values()])
 print "# NaN POI t_pay: ",
 sum([x['total_payments']=='NaN' and x['poi'] == True for x in enron_data.values()])
+print "John Baxter: Total Payments: ", enron_data["BAXTER JOHN C"]['total_payments']
