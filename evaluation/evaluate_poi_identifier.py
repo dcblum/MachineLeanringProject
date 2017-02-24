@@ -26,13 +26,36 @@ all_features = ["poi", "salary", "to_messages", "deferral_payments",
 "long_term_incentive", "shared_receipt_with_poi", "restricted_stock",
 "director_fees", "email_address"]
 
-current_max_features_list = ["poi", "exercised_stock_options", "deferred_income",
-"total_stock_value", "long_term_incentive", "expenses"]
+current_max_features_list = ["poi", "exercised_stock_options",
+"deferred_income", "total_stock_value", "long_term_incentive", "expenses"]
 
 features_list = ["poi", "exercised_stock_options", "deferred_income",
 "total_stock_value", "long_term_incentive", "expenses"]
 
 data = featureFormat(data_dict, features_list)
+
+
+# Standardize data
+from sklearn.preprocessing import scale
+from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import normalize
+
+# Create empty features list of lists
+data_need_scale = [[] for i in range(len(features_list)-1)]
+for person in data:
+    for i in range(len(features_list)-1):
+        data_need_scale[i].append(person[i+1])
+
+# Scale each feature in the list
+data_scaled = normalize(data_need_scale)
+
+# Placed scaled features back into data
+for person in range(len(data)):
+    for feature in range(len(features_list)-1):
+        data[person][feature+1] = data_scaled[feature][person]
+
+####
+
 labels, features = targetFeatureSplit(data)
 
 ### your code goes here
@@ -42,6 +65,7 @@ from sklearn.metrics import classification_report
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
+
 
 from sklearn.metrics import accuracy_score
 
@@ -79,6 +103,8 @@ def try_classifier(name, clf_choice):
     print "Recall Score: ", recall_score(labels_test, labels_pred)
 
 
+
+
 ##### Decion Tree #####
 # Seems to work best with specfic selected features
 from sklearn import tree
@@ -96,11 +122,11 @@ try_classifier("Extra Tree", ExtraTreesClassifier())
 
 ##### SVMS #####
 # So far linear, poly, and rfb SVMs are pretty bad at predicting pre-normalize
-# from sklearn.svm import SVC
-# try_classifier("SVM rbf", SVC(C=20, kernel='rbf'))
-# try_classifier("SVM poly", SVC(C=20, kernel='poly'))
+from sklearn.svm import SVC
+try_classifier("SVM rbf", SVC(C=20, kernel='rbf'))
+try_classifier("SVM poly", SVC(C=20, kernel='poly'))
 
 ##### Naive Bayes #####
 # Naive Bayes never predicts true positive, but can predict true negative.
-# from sklearn.naive_bayes import GaussianNB
-# try_classifier("Naive Bayes", GaussianNB())
+from sklearn.naive_bayes import GaussianNB
+try_classifier("Naive Bayes", GaussianNB())
