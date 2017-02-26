@@ -11,8 +11,9 @@ from tester import dump_classifier_and_data
 ### features_list is a list of strings, each of which is a feature name.
 ### The first feature must be "poi".
 features_list = ["poi", "exercised_stock_options", "deferred_income",
- "total_stock_value", "long_term_incentive", "expenses"]
- # You will need to use more features
+ "total_stock_value", "long_term_incentive"]
+
+# You will need to use more features
 
 ### Load the dictionary containing the dataset
 with open("final_project_dataset.pkl", "r") as data_file:
@@ -27,9 +28,6 @@ del data_dict['THE TRAVEL AGENCY IN THE PARK']
 
 ### Store to my_dataset for easy export below.
 my_dataset = data_dict
-
-from pprint import pprint
-print(my_dataset)
 
 ### Extract features and labels from dataset for local testing
 data = featureFormat(my_dataset, features_list, sort_keys = True)
@@ -48,7 +46,7 @@ labels, features = targetFeatureSplit(data)
 # Example starting point. Try investigating other evaluation techniques!
 from sklearn.cross_validation import train_test_split
 features_train, features_test, labels_train, labels_test = train_test_split(
-    features, labels, test_size=0.3, random_state=42)
+    features, labels, test_size=0.5)
 
 
 ### Task 4: Try a varity of classifiers
@@ -64,6 +62,7 @@ from sklearn.metrics import confusion_matrix
 from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
 from sklearn.metrics import accuracy_score
+
 
 def pound_line():
     print "\n" + "#" * 60
@@ -91,11 +90,16 @@ def try_classifier(name, clf):
     print "Precision Score: ", precision_score(labels_test, labels_pred)
     print "Recall Score: ", recall_score(labels_test, labels_pred)
 
-##### Decision Tree #####
+##### Random Forest #####
 # Seems to work best with specfic selected features
-from sklearn import tree
-clf = tree.DecisionTreeClassifier()
-try_classifier("Decision Tree", clf)
+from sklearn.ensemble import RandomForestClassifier
+clf = RandomForestClassifier()
+try_classifier("Random Forest", clf)
+
+##### Extra Trees #####
+from sklearn.ensemble import ExtraTreesClassifier
+clf = ExtraTreesClassifier()
+try_classifier("Extra Tree", clf)
 
 ### Task 6: Dump your classifier, dataset, and features_list so anyone can
 ### check your results. You do not need to change anything below, but make sure
