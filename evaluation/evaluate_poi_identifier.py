@@ -139,9 +139,9 @@ for person in missing_list:
 
 # Normalize All Data from 0 to 1
 # Find all values in a feature, calculate normalization, then reassign value
-'''for feature in features_list[1:]:
+for feature in features_list[1:]:
     normalize_feature(feature, data_dict)
-'''
+
 
 
 ### your code goes here
@@ -222,7 +222,11 @@ def hundred_test_prec_recall(name, clf_choice):
     print "Recall Mean: ", np.mean(recall_list)
     print "STD_sum: ", np.std(precision_list) + np.std(recall_list)
 
+for person in data_dict:
+    if data_dict[person]['poi']:
+        print person
 
+'''
 ##### Decision Tree #####
 # Seems to work best with specfic selected features
 from sklearn import tree
@@ -250,3 +254,4 @@ from sklearn.naive_bayes import GaussianNB
 hundred_test_prec_recall("Naive Bayes", GaussianNB())
 
 pound_line()
+'''
