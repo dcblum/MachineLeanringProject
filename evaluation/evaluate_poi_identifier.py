@@ -19,19 +19,19 @@ import numpy as np
 
 data_dict = pickle.load(open("../final_project/final_project_dataset.pkl", "r") )
 
-### add more features to features_list!
-all_features = ["poi", "salary", "to_messages", "deferral_payments",
-"total_payments", "loan_advances", "bonus", "restricted_stock_deferred",
-"deferred_income", "total_stock_value", "expenses", "from_poi_to_this_person",
-"exercised_stock_options", "from_messages", "other", "from_this_person_to_poi",
-"long_term_incentive", "shared_receipt_with_poi", "restricted_stock",
-"director_fees", "email_address"]
+### Features: excluding 'email_address'
+all_features = ['poi', 'salary', 'deferral_payments', 'total_payments',
+'loan_advances', 'bonus', 'restricted_stock_deferred', 'deferred_income',
+'total_stock_value', 'expenses', 'exercised_stock_options', 'other',
+'long_term_incentive', 'restricted_stock', 'director_fees', 'to_messages',
+'from_poi_to_this_person', 'from_messages', 'from_this_person_to_poi',
+'shared_receipt_with_poi']
 
 current_max_features_list = ["poi", "exercised_stock_options",
-"deferred_income", "total_stock_value", "long_term_incentive", "expenses"]
+"deferred_income", "total_stock_value", "expenses"]
 
-features_list = ["poi", "exercised_stock_options", 'deferral_payments',
-"deferred_income", "total_stock_value", "long_term_incentive"]
+features_list = ["poi", "exercised_stock_options", "deferred_income",
+ "expenses"]
 
 
 # Remove Outliers
@@ -94,7 +94,7 @@ for feature in features_list[1:]:
             elif value < value_low:
                 value_low = value
 
-    # loop to calculate normilization
+    # loop to assign normalization value
     for person in data_dict:
         value = float(data_dict[person][feature])
         # if value exists between high and low
@@ -105,11 +105,6 @@ for feature in features_list[1:]:
                 data_dict[person][feature] = value_norm
 
 
-### Extract features and labels from dataset for local testing
-data = featureFormat(data_dict, features_list, sort_keys = True)
-
-# Create labels and features
-labels, features = targetFeatureSplit(data)
 
 ### your code goes here
 from time import time
@@ -120,9 +115,17 @@ from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
 from sklearn.metrics import accuracy_score
 
+'''# Combined into function hundred_test_prec_recall
+
+### Extract features and labels from dataset for local testing
+data = featureFormat(data_dict, features_list, sort_keys = True)
+
+# Create labels and features
+labels, features = targetFeatureSplit(data)
 
 features_train, features_test, labels_train, labels_test = train_test_split(
 features, labels, test_size = .3)
+'''
 
 def pound_line():
     print "\n" + "#" * 60
@@ -151,33 +154,61 @@ def try_classifier(name, clf_choice):
     print "Precision Score: ", precision_score(labels_test, labels_pred)
     print "Recall Score: ", recall_score(labels_test, labels_pred)
 
+def hundred_test_prec_recall(name, clf_choice):
+    precision_list = list()
+    recall_list = list()
+    for i in range(100):
+        ### Extract features and labels from dataset for local testing
+        data = featureFormat(data_dict, features_list, sort_keys = True)
+        # Create labels and features
+        labels, features = targetFeatureSplit(data)
+        features_train, features_test, labels_train, labels_test = train_test_split(
+        features, labels, test_size = .33)
+
+        clf = clf_choice
+        clf.fit(features_train, labels_train)
+        labels_pred = clf.predict(features_test)
+
+        try:
+            precision = precision_score(labels_test, labels_pred)
+            recall = recall_score(labels_test, labels_pred)
+            precision_list.append(precision)
+            recall_list.append(recall)
+        except:
+            pass
+
+    pound_line()
+    print " " * 20 + name + "\n"
+    print confusion_matrix(labels_test, labels_pred)
+    print "Precision Mean: ", np.mean(precision_list)
+    print "Recall Mean: ", np.mean(recall_list)
+    pound_line()
+
 
 ##### Decision Tree #####
 # Seems to work best with specfic selected features
 from sklearn import tree
-try_classifier("Decision Tree", tree.DecisionTreeClassifier())
-
+hundred_test_prec_recall("Decision Tree", tree.DecisionTreeClassifier())
 
 ##### Random Forest #####
 # Does okay...
 from sklearn.ensemble import RandomForestClassifier
-try_classifier("Random Forest", RandomForestClassifier())
-
+hundred_test_prec_recall("Random Forest", RandomForestClassifier())
 
 ##### Extra Trees #####
 # Current best if using all available features, but still just okay..
 from sklearn.ensemble import ExtraTreesClassifier
-try_classifier("Extra Tree", ExtraTreesClassifier())
+hundred_test_prec_recall("Extra Tree", ExtraTreesClassifier())
 
 ##### SVMS #####
 # So far linear, poly, and rfb SVMs are pretty bad at predicting pre-normalize
 from sklearn.svm import SVC
-try_classifier("SVM rbf", SVC(C=20, kernel='rbf'))
-try_classifier("SVM poly", SVC(C=20, kernel='poly'))
+hundred_test_prec_recall("SVM rbf", SVC(C=20, kernel='rbf'))
+hundred_test_prec_recall("SVM poly", SVC(C=20, kernel='poly'))
 
 ##### Naive Bayes #####
 # Naive Bayes never predicts true positive, but can predict true negative.
 from sklearn.naive_bayes import GaussianNB
-try_classifier("Naive Bayes", GaussianNB())
+hundred_test_prec_recall("Naive Bayes", GaussianNB())
 
 pound_line()
