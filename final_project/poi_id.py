@@ -22,32 +22,10 @@ del data_dict['TOTAL']
 del data_dict['THE TRAVEL AGENCY IN THE PARK']
 
 ### Task 3: Create new feature(s)
-
-# Poi email Score
-# find percent emails sent to poi and percent from poi to this person
-# add percent_to and percent_from to generate score
-for person in data_dict:
-    from_messages = data_dict[person]['from_messages']
-    to_messages = data_dict[person]['to_messages']
-    from_poi = data_dict[person]['from_poi_to_this_person']
-    to_poi = data_dict[person]['from_this_person_to_poi']
-
-    data_dict[person]['email_poi_score'] = 'NaN'
-
-    if from_messages != 'NaN' and from_poi != 'NaN':
-        if to_messages != 'NaN' and to_poi != 'NaN':
-            percent_to = float(to_poi) / float(from_messages)
-            percent_from = float(from_poi) / float(to_messages)
-            data_dict[person]['percent_to_poi_from_this_person'] = percent_to
-            data_dict[person]['percent_from_poi_to_this_person'] = percent_from
-
-            # add from and to poi percents together
-            data_dict[person]['email_poi_score'] = percent_to + percent_from
-
-
-# Normalize All Data from 0 to 1
-# Find all values in a feature, calculate normalization, then reassign value
-for feature in features_list[1:]:
+# Create normalize function
+def normalize_feature(feature, data_dict):
+    '''normalize_feature(string, dictionary):
+    Normalize feature in data_dict[person][feature] dictionary'''
     # features_list[1:] to ignore poi feature
     # initialize high and low value for normalization function
     value_high = None
@@ -76,6 +54,41 @@ for feature in features_list[1:]:
             if value_high != value_low:
                 value_norm = (value - value_low) / (value_high - value_low)
                 data_dict[person][feature] = value_norm
+
+
+# Create feature: email_poi_score
+# find percent emails sent to poi and percent from poi to this person
+for person in data_dict:
+    from_messages = data_dict[person]['from_messages']
+    to_messages = data_dict[person]['to_messages']
+    from_poi = data_dict[person]['from_poi_to_this_person']
+    to_poi = data_dict[person]['from_this_person_to_poi']
+
+    data_dict[person]['email_poi_score'] = 'NaN'
+
+    percent_to = float(to_poi) / float(from_messages)
+    percent_from = float(from_poi) / float(to_messages)
+
+    data_dict[person]['percent_to_poi'] = percent_to
+    data_dict[person]['percent_from_poi'] = percent_from
+
+# normailize percent_to_poi and percent_from_poi and add together
+normalize_feature('percent_to_poi', data_dict)
+normalize_feature('percent_from_poi', data_dict)
+
+# add normalized percent_to_poi and percent_from_poi to create email_poi_score
+for person in data_dict:
+    percent_to_norm = data_dict[person]['percent_to_poi']
+    percent_from_norm = data_dict[person]['percent_from_poi']
+
+    email_poi_score = percent_to_norm + percent_from_norm
+    if email_poi_score >= 0:
+        data_dict[person]['email_poi_score'] = email_poi_score
+
+
+# Normalize features, DON'T normail poi (feature[0] is 'poi')
+for feature in features_list[1:]:
+    normalize_feature(feature, data_dict)
 
 ### Store to my_dataset for easy export below.
 my_dataset = data_dict
@@ -113,13 +126,10 @@ from sklearn.metrics import recall_score
 from sklearn.metrics import accuracy_score
 import numpy as np
 
-def pound_line():
-    print "\n" + "#" * 60
-
 def hundred_test_prec_recall(name, clf_choice):
     precision_list = list()
     recall_list = list()
-    for i in range(100):
+    for i in range(1000):
         ### Extract features and labels from dataset for local testing
         data = featureFormat(data_dict, features_list, sort_keys = True)
         # Create labels and features
@@ -127,6 +137,7 @@ def hundred_test_prec_recall(name, clf_choice):
         features_train, features_test, labels_train, labels_test = \
             train_test_split(features, labels, test_size = .33)
 
+        # Create, fit, and predict classifier
         clf = clf_choice
         clf.fit(features_train, labels_train)
         labels_pred = clf.predict(features_test)
@@ -139,7 +150,7 @@ def hundred_test_prec_recall(name, clf_choice):
         except:
             pass
 
-    pound_line()
+    print "\n" + "#" * 60
     print " " * 20 + name + "\n"
     print confusion_matrix(labels_test, labels_pred)
     print "Precision Mean: ", np.mean(precision_list)

@@ -98,8 +98,10 @@ normalize_feature('percent_from_poi', data_dict)
 for person in data_dict:
     percent_to_norm = data_dict[person]['percent_to_poi']
     percent_from_norm = data_dict[person]['percent_from_poi']
-    data_dict[person]['email_poi_score'] = percent_to_norm + percent_from_norm
 
+    email_poi_score = percent_to_norm + percent_from_norm
+    if email_poi_score >= 0:
+        data_dict[person]['email_poi_score'] = email_poi_score
 
 '''
 # Find Poi with missing features
@@ -137,9 +139,9 @@ for person in missing_list:
 
 # Normalize All Data from 0 to 1
 # Find all values in a feature, calculate normalization, then reassign value
-for feature in features_list[1:]:
+'''for feature in features_list[1:]:
     normalize_feature(feature, data_dict)
-
+'''
 
 
 ### your code goes here
@@ -193,7 +195,7 @@ def try_classifier(name, clf_choice):
 def hundred_test_prec_recall(name, clf_choice):
     precision_list = list()
     recall_list = list()
-    for i in range(100):
+    for i in range(1000):
         ### Extract features and labels from dataset for local testing
         data = featureFormat(data_dict, features_list, sort_keys = True)
         # Create labels and features
