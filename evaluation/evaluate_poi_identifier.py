@@ -17,7 +17,7 @@ sys.path.append("../tools/")
 from feature_format import featureFormat, targetFeatureSplit
 import numpy as np
 
-data_dict = pickle.load(open("../final_project/final_project_dataset.pkl", "r") )
+data_dict = pickle.load(open("../final_project/final_project_dataset.pkl", "r"))
 
 ### Features: excluding 'email_address'
 all_features = ['poi', 'salary', 'deferral_payments', 'total_payments',
@@ -37,6 +37,68 @@ features_list = ["poi", "exercised_stock_options", "deferred_income",
 # Remove Outliers
 del data_dict['TOTAL']
 del data_dict['THE TRAVEL AGENCY IN THE PARK']
+
+
+# Create normalize function
+def normalize_feature(feature, data_dict):
+    '''normalize_feature([string], [dictionary]):
+    Normalizes all numerical values of key 'string' in a dictionary'''
+    # features_list[1:] to ignore poi feature
+    # initialize high and low value for normalization function
+    value_high = None
+    value_low = None
+
+    # loop through persons to find high and low values for features
+    for person in data_dict:
+        value = data_dict[person][feature]
+        if value != 'NaN':
+            # If first value in feature then assign value to variables
+            if value_low == None:
+                value_high = value
+                value_low = value
+            # look to see if value is higher or lower
+            if value > value_high:
+                value_high = value
+            elif value < value_low:
+                value_low = value
+
+    # loop to assign normalization value
+    for person in data_dict:
+        value = float(data_dict[person][feature])
+        # if value exists between high and low
+        if (value_high >= value) and (value_low <= value):
+            # if denominator isn't zero
+            if value_high != value_low:
+                value_norm = (value - value_low) / (value_high - value_low)
+                data_dict[person][feature] = value_norm
+
+
+# Create feature: email_poi_score
+# find percent emails sent to poi and percent from poi to this person
+for person in data_dict:
+    from_messages = data_dict[person]['from_messages']
+    to_messages = data_dict[person]['to_messages']
+    from_poi = data_dict[person]['from_poi_to_this_person']
+    to_poi = data_dict[person]['from_this_person_to_poi']
+
+    data_dict[person]['email_poi_score'] = 'NaN'
+
+
+    percent_to = float(to_poi) / float(from_messages)
+    percent_from = float(from_poi) / float(to_messages)
+
+    data_dict[person]['percent_to_poi'] = percent_to
+    data_dict[person]['percent_from_poi'] = percent_from
+
+# normailize each and add together
+normalize_feature('percent_to_poi', data_dict)
+normalize_feature('percent_from_poi', data_dict)
+
+# add normalized percent_to_poi and percent_from_poi to create email_poi_score
+for person in data_dict:
+    percent_to_norm = data_dict[person]['percent_to_poi']
+    percent_from_norm = data_dict[person]['percent_from_poi']
+    data_dict[person]['email_poi_score'] = percent_to_norm + percent_from_norm
 
 
 '''
@@ -72,37 +134,11 @@ for person in missing_list:
 #print "POI missing ALL features: ", WARNING_LIST
 '''
 
-# Normalize Data
+
+# Normalize All Data from 0 to 1
 # Find all values in a feature, calculate normalization, then reassign value
 for feature in features_list[1:]:
-    # features_list[1:] to ignore poi feature
-    # initialize high and low value for normalization function
-    value_high = None
-    value_low = None
-
-    # loop through persons to find high and low values for features
-    for person in data_dict:
-        value = data_dict[person][feature]
-        if value != 'NaN':
-            # If first value in feature then assign value to variables
-            if value_low == None:
-                value_high = value
-                value_low = value
-            # look to see if value is higher or lower
-            if value > value_high:
-                value_high = value
-            elif value < value_low:
-                value_low = value
-
-    # loop to assign normalization value
-    for person in data_dict:
-        value = float(data_dict[person][feature])
-        # if value exists between high and low
-        if (value_high >= value) and (value_low <= value):
-            # if denominator isn't zero
-            if value_high != value_low:
-                value_norm = (value - value_low) / (value_high - value_low)
-                data_dict[person][feature] = value_norm
+    normalize_feature(feature, data_dict)
 
 
 
@@ -162,8 +198,8 @@ def hundred_test_prec_recall(name, clf_choice):
         data = featureFormat(data_dict, features_list, sort_keys = True)
         # Create labels and features
         labels, features = targetFeatureSplit(data)
-        features_train, features_test, labels_train, labels_test = train_test_split(
-        features, labels, test_size = .33)
+        features_train, features_test, labels_train, labels_test = \
+            train_test_split(features, labels, test_size = .33)
 
         clf = clf_choice
         clf.fit(features_train, labels_train)
@@ -182,7 +218,7 @@ def hundred_test_prec_recall(name, clf_choice):
     print confusion_matrix(labels_test, labels_pred)
     print "Precision Mean: ", np.mean(precision_list)
     print "Recall Mean: ", np.mean(recall_list)
-    pound_line()
+    print "STD_sum: ", np.std(precision_list) + np.std(recall_list)
 
 
 ##### Decision Tree #####
