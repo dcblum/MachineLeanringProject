@@ -23,40 +23,6 @@ del data_dict['THE TRAVEL AGENCY IN THE PARK']
 
 ### Task 3: Create new feature(s)
 
-'''
-# Create normalize function
-def normalize_feature(feature, data_dict):
-
-    # features_list[1:] to ignore poi feature
-    # initialize high and low value for normalization function
-    value_high = None
-    value_low = None
-
-    # loop through persons to find high and low values for features
-    for person in data_dict:
-        value = data_dict[person][feature]
-        if value != 'NaN':
-            # If first value in feature then assign value to variables
-            if value_low == None:
-                value_high = value
-                value_low = value
-            # look to see if value is higher or lower
-            if value > value_high:
-                value_high = value
-            elif value < value_low:
-                value_low = value
-
-    # loop to assign normalization value
-    for person in data_dict:
-        value = float(data_dict[person][feature])
-        # if value exists between high and low
-        if (value_high >= value) and (value_low <= value):
-            # if denominator isn't zero
-            if value_high != value_low:
-                value_norm = (value - value_low) / (value_high - value_low)
-                data_dict[person][feature] = value_norm
-'''
-
 # Create feature: email_poi_score
 # find percent emails sent to poi and percent from poi to this person
 for person in data_dict:
@@ -73,7 +39,8 @@ for person in data_dict:
     data_dict[person]['percent_to_poi'] = percent_to
     data_dict[person]['percent_from_poi'] = percent_from
 
-# normailize percent_to_poi and percent_from_poi and add together
+
+''' # normailize percent_to_poi and percent_from_poi and add together
 normalize_feature('percent_to_poi', data_dict)
 normalize_feature('percent_from_poi', data_dict)
 
@@ -90,6 +57,7 @@ for person in data_dict:
 # Normalize features, DON'T normail poi (feature[0] is 'poi')
 for feature in features_list[1:]:
     normalize_feature(feature, data_dict)
+'''
 
 ### Store to my_dataset for easy export below.
 my_dataset = data_dict
@@ -125,18 +93,28 @@ from sklearn.metrics import confusion_matrix
 from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
 from sklearn.metrics import accuracy_score
+from sklearn.model_selection import StratifiedShuffleSplit
 import numpy as np
 
-def hundred_test_prec_recall(name, clf_choice):
+def test_prec_recall(name, clf_choice):
     precision_list = list()
     recall_list = list()
-    for i in range(1000):
+    for i in range(100):
         ### Extract features and labels from dataset for local testing
         data = featureFormat(data_dict, features_list, sort_keys = True)
         # Create labels and features
         labels, features = targetFeatureSplit(data)
-        features_train, features_test, labels_train, labels_test = \
-            train_test_split(features, labels, test_size = .33)
+
+        # transform into np.array for StratifiedShuffleSplit
+        features = np.array(features)
+        labels = np.array(labels)
+
+        # Shuffle and split data into training/testing sets
+        sss = StratifiedShuffleSplit()
+        for train_index, test_index in sss.split(features, labels):
+            features_train, features_test = features[train_index], features[test_index]
+            labels_train, labels_test = labels[train_index], labels[test_index]
+
 
         # Create, fit, and predict classifier
         clf = clf_choice
@@ -153,7 +131,7 @@ def hundred_test_prec_recall(name, clf_choice):
 
     print "\n" + "#" * 60
     print " " * 20 + name + "\n"
-    print confusion_matrix(labels_test, labels_pred)
+    # print confusion_matrix(labels_test, labels_pred)
     print "Precision Mean: ", np.mean(precision_list)
     print "Recall Mean: ", np.mean(recall_list)
     print "STD_sum: ", np.std(precision_list) + np.std(recall_list)
@@ -162,28 +140,38 @@ def hundred_test_prec_recall(name, clf_choice):
 ##### Decision Tree #####
 # Seems to work best with specfic selected features
 from sklearn import tree
-hundred_test_prec_recall("Decision Tree", tree.DecisionTreeClassifier())
+test_prec_recall("Decision Tree", tree.DecisionTreeClassifier())
 
 ##### Random Forest #####
 # Does okay...
 from sklearn.ensemble import RandomForestClassifier
-hundred_test_prec_recall("Random Forest", RandomForestClassifier())
+test_prec_recall("Random Forest", RandomForestClassifier())
 
 ##### Extra Trees #####
 # Current best if using all available features, but still just okay..
 from sklearn.ensemble import ExtraTreesClassifier
-hundred_test_prec_recall("Extra Tree", ExtraTreesClassifier())
+test_prec_recall("Extra Tree", ExtraTreesClassifier())
 
 ##### SVMS #####
 # So far linear, poly, and rfb SVMs are pretty bad at predicting pre-normalize
 from sklearn.svm import SVC
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import MinMaxScaler
+
+pipe = Pipeline(steps=[('minmaxer', MinMaxScaler()),  ('clf', SVC())])
+#pipe.fit(features_train, features_test)
+
+
+'''
 hundred_test_prec_recall("SVM rbf", SVC(C=20, kernel='rbf'))
 hundred_test_prec_recall("SVM poly", SVC(C=20, kernel='poly'))
+'''
+
 
 ##### Naive Bayes #####
 # Naive Bayes never predicts true positive, but can predict true negative.
 from sklearn.naive_bayes import GaussianNB
-hundred_test_prec_recall("Naive Bayes", GaussianNB())
+test_prec_recall("Naive Bayes", GaussianNB())
 
 ###### Best clf appears to be Decison Tree;
 ###### precision and recall mean > .3
